@@ -34,17 +34,11 @@ class FaceAttendanceSystem {
       { id: 3, name: "S35" }
     ];
 
+    // Initialize app
     this.initializeApp();
   }
 
-  async initializeApp() {
-    await this.loadFaceModels();
-    this.bindEvents();
-    await this.loadStudentsFromDatabase();
-    this.showLoginScreen();
-  }
-
-  async loadFaceModels() {
+  loadFaceModels = async () => {
     try {
       this.showStatus("Loading face recognition models...", "info");
       const MODEL_URL = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights";
@@ -64,7 +58,14 @@ class FaceAttendanceSystem {
     }
   }
 
-  async loadStudentsFromDatabase() {
+  initializeApp = async () => {
+    await this.loadFaceModels();
+    this.bindEvents();
+    await this.loadStudentsFromDatabase();
+    this.showLoginScreen();
+  }
+
+  loadStudentsFromDatabase = async () => {
     try {
       const response = await this.apiCall('/students');
       this.students = response && response.students
@@ -91,7 +92,7 @@ class FaceAttendanceSystem {
     return students;
   }
 
-  bindEvents() {
+  bindEvents = () => {
     document.getElementById('loginForm').addEventListener('submit', e => {
       e.preventDefault();
       this.handleLogin();
@@ -116,12 +117,12 @@ class FaceAttendanceSystem {
     });
   }
 
-  async handleLogin() {
+  handleLogin = async () => {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    
-    console.log(`Login attempt: ${username}`); // Debug logging
-    
+
+    console.log(`Login attempt: ${username}`);
+
     try {
       const response = await this.apiCall('/login', 'POST', { username, password });
       if (response && response.success) {
@@ -134,7 +135,7 @@ class FaceAttendanceSystem {
       console.log("API login failed, trying fallback:", error.message);
     }
 
-    // Fallback login (same as backend)
+    // Fallback login
     if ((username === 'teacher' && password === 'teach123') ||
         (username === '2500032073' && password === '2500032073')) {
       this.currentUser = { username, role: 'teacher' };
@@ -144,20 +145,20 @@ class FaceAttendanceSystem {
     }
   }
 
-  showLoginScreen() {
+  showLoginScreen = () => {
     document.getElementById('loginSection').classList.remove('hidden');
     document.getElementById('dashboard').classList.add('hidden');
     document.getElementById('logoutBtn').classList.add('hidden');
   }
 
-  showDashboard() {
+  showDashboard = () => {
     document.getElementById('loginSection').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
     document.getElementById('logoutBtn').classList.remove('hidden');
     this.updateAttendanceDisplay();
   }
 
-  async selectVideoSource(type) {
+  selectVideoSource = async (type) => {
     try {
       if (this.currentStream) {
         this.currentStream.getTracks().forEach(track => track.stop());
@@ -196,7 +197,7 @@ class FaceAttendanceSystem {
     }
   }
 
-  handleStreamEnd() {
+  handleStreamEnd = () => {
     this.showStatus("Video source stopped. Please select a video source to continue.", "error");
     document.getElementById('startSessionBtn').disabled = true;
     document.getElementById('videoSection').style.display = 'none';
@@ -206,7 +207,7 @@ class FaceAttendanceSystem {
     document.getElementById('webcamBtn').classList.remove('active');
   }
 
-  async startSession() {
+  startSession = () => {
     if (!this.currentStream) {
       this.showStatus("Please select a video source first", "error");
       return;
@@ -237,7 +238,7 @@ class FaceAttendanceSystem {
     this.updateSessionProgress();
   }
 
-  initializeAttendanceData(sectionId) {
+  initializeAttendanceData = (sectionId) => {
     const sectionStudents = this.students.filter(
       student => student.section === this.sections.find(s => s.id == sectionId)?.name
     );
@@ -254,7 +255,7 @@ class FaceAttendanceSystem {
     });
   }
 
-  startCaptureTimer() {
+  startCaptureTimer = () => {
     this.performFaceDetection();
     this.captureInterval = setInterval(() => {
       if (this.isSessionActive && this.captureCount < this.config.totalCaptures) {
@@ -268,7 +269,7 @@ class FaceAttendanceSystem {
     }, this.config.sessionDuration);
   }
 
-  async performFaceDetection() {
+  performFaceDetection = async () => {
     if (!this.modelsLoaded || this.processingDetection) return;
     this.processingDetection = true;
     this.captureCount++;
@@ -294,7 +295,7 @@ class FaceAttendanceSystem {
     }
   }
 
-  async processFaceDetections(detections) {
+  processFaceDetections = async (detections) => {
     const currentTime = new Date();
     let processedStudents = 0;
     const availableStudents = Array.from(this.attendanceData.keys());
@@ -306,9 +307,7 @@ class FaceAttendanceSystem {
           attendance.detections++;
           attendance.timestamps.push(currentTime);
           attendance.confidenceScores.push(0.85);
-          attendance.status = attendance.detections >= this.config.requiredDetections
-            ? 'present'
-            : 'partial';
+          attendance.status = attendance.detections >= this.config.requiredDetections ? 'present' : 'partial';
           processedStudents++;
         }
       }
@@ -316,24 +315,18 @@ class FaceAttendanceSystem {
     console.log(`Processed ${processedStudents} student detections`);
   }
 
-  // Missing methods - THESE WERE MISSING AND CAUSING THE ERRORS
-  updateAttendanceDisplay() {
+  updateAttendanceDisplay = () => {
     const tbody = document.querySelector('#attendanceTable tbody');
     if (!tbody) return;
-    
     tbody.innerHTML = '';
-    const attendanceArray = Array.from(this.attendanceData.values())
-      .sort((a, b) => a.name.localeCompare(b.name));
-    
+    const attendanceArray = Array.from(this.attendanceData.values()).sort((a, b) => a.name.localeCompare(b.name));
     let presentCount = 0, partialCount = 0, absentCount = 0;
-    
     attendanceArray.forEach(attendance => {
       const row = document.createElement('tr');
       row.className = `attendance-row ${attendance.status}`;
       const avgConfidence = attendance.confidenceScores.length > 0
         ? (attendance.confidenceScores.reduce((a, b) => a + b, 0) / attendance.confidenceScores.length).toFixed(2)
         : '0.00';
-      
       row.innerHTML = `
         <td>${attendance.name}</td>
         <td>${attendance.idNumber}</td>
@@ -342,45 +335,38 @@ class FaceAttendanceSystem {
         <td><span class="status-badge status-badge--${attendance.status}">${attendance.status}</span></td>
       `;
       tbody.appendChild(row);
-      
       if (attendance.status === 'present') presentCount++;
       else if (attendance.status === 'partial') partialCount++;
       else absentCount++;
     });
-
-    // Update stats
     document.getElementById('totalStudents').textContent = attendanceArray.length;
     document.getElementById('presentCount').textContent = presentCount;
     document.getElementById('partialCount').textContent = partialCount;
     document.getElementById('absentCount').textContent = absentCount;
   }
 
-  updateSessionProgress() {
+  updateSessionProgress = () => {
     const progressPercent = (this.captureCount / this.config.totalCaptures) * 100;
     document.getElementById('sessionProgressBar').style.width = `${progressPercent}%`;
     document.getElementById('captureProgress').textContent = `${this.captureCount}/${this.config.totalCaptures}`;
-    
     const timeElapsed = Date.now() - this.startTime;
     const timeRemaining = Math.max(0, this.config.sessionDuration - timeElapsed);
     const minutesRemaining = Math.floor(timeRemaining / 60000);
     document.getElementById('timeRemaining').textContent = `${minutesRemaining}m`;
   }
 
-  async apiCall(endpoint, method = 'GET', data = null) {
+  apiCall = async (endpoint, method = 'GET', data = null) => {
     const url = `${this.config.api_endpoint}${endpoint}`;
     const options = {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' }
     };
-    
     if (this.authToken) {
       options.headers['Authorization'] = `Bearer ${this.authToken}`;
     }
-    
     if (data) {
       options.body = JSON.stringify(data);
     }
-    
     const response = await fetch(url, options);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -388,7 +374,7 @@ class FaceAttendanceSystem {
     return await response.json();
   }
 
-  showStatus(message, type = 'info') {
+  showStatus = (message, type = 'info') => {
     console.log(`[${type.toUpperCase()}] ${message}`);
     const statusDiv = document.getElementById('statusMessage');
     if (statusDiv) {
@@ -401,7 +387,7 @@ class FaceAttendanceSystem {
     }
   }
 
-  logout() {
+  logout = () => {
     this.currentUser = null;
     this.authToken = null;
     if (this.currentStream) {
@@ -410,7 +396,7 @@ class FaceAttendanceSystem {
     this.showLoginScreen();
   }
 
-  async endSession() {
+  endSession = () => {
     this.isSessionActive = false;
     if (this.captureInterval) clearInterval(this.captureInterval);
     if (this.sessionTimer) clearTimeout(this.sessionTimer);
@@ -419,14 +405,13 @@ class FaceAttendanceSystem {
     this.showStatus("Session ended. Ready to upload attendance data.", "success");
   }
 
-  async uploadAttendance() {
+  uploadAttendance = async () => {
     try {
       const attendanceArray = Array.from(this.attendanceData.values());
       const response = await this.apiCall('/attendance/batch-submit', 'POST', {
         session_id: this.sessionData.id,
         attendance_data: attendanceArray
       });
-      
       if (response.success) {
         this.showStatus("Attendance uploaded successfully!", "success");
         document.getElementById('uploadAttendanceBtn').classList.add('hidden');
