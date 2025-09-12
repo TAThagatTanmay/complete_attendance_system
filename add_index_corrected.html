@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enhanced Attendance System SQL Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            background: #f9f9f9;
+            margin: 20px 0;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+
+        .form-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+            flex: 1;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select, textarea {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .file-input {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #e9ecef;
+            border-radius: 8px;
+            border: 2px dashed #007bff;
+        }
+
+        #output {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .download-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 25px;
+            background: #f0f8ff;
+            border-radius: 8px;
+        }
+
+        .download-btn {
+            background: #28a745;
+            font-size: 18px;
+            padding: 15px 40px;
+            border-radius: 8px;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+
+        .new-feature {
+            border-left-color: #28a745;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .instructions h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        .instructions ol {
+            color: #856404;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Enhanced Attendance System SQL Editor</h1>
+        <p style="text-align: center; color: #666; font-size: 16px;">Generate SQL statements for both RFID and Face Recognition attendance systems</p>
+
+        <!-- File Loader -->
+        <div class="file-input">
+            <h3>📁 Load Existing Schema (Optional)</h3>
+            <label for="fileInput">Upload schema.sql file:</label>
+            <input type="file" id="fileInput" accept=".sql">
+        </div>
+
+        <!-- Persons Section -->
+        <div class="form-section">
+            <h3>👤 Add Person (Student/Teacher)</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="p_name">Full Name *</label>
+                    <input type="text" id="p_name" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label for="p_id_number">ID Number *</label>
+                    <input type="text" id="p_id_number" placeholder="e.g., 2500032073">
+                </div>
+                <div class="form-group">
+                    <label for="p_rfid">RFID Tag</label>
+                    <input type="text" id="p_rfid" placeholder="e.g., B2F7AF6A">
+                </div>
+                <div class="form-group">
+                    <label for="p_role">Role *</label>
+                    <select id="p_role">
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="addPerson()">➕ Add Person</button>
+        </div>
+
+        <!-- Sections -->
+        <div class="form-section">
+            <h3>📚 Add Section/Class</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="s_name">Section Name *</label>
+                    <input type="text" id="s_name" placeholder="e.g., S33, CS-A, etc.">
+                </div>
+            </div>
+            <button onclick="addSection()">➕ Add Section</button>
+        </div>
+
+        <!-- Student-Section Mapping -->
+        <div class="form-section">
+            <h3>🔗 Link Student to Section</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ss_pid">Student Person ID *</label>
+                    <input type="number" id="ss_pid" placeholder="Person ID from database">
+                </div>
+                <div class="form-group">
+                    <label for="ss_sid">Section ID *</label>
+                    <input type="number" id="ss_sid" placeholder="Section ID from database">
+                </div>
+            </div>
+            <button onclick="addStudentSection()">🔗 Link Student to Section</button>
+        </div>
+
+        <!-- Teacher-Section Mapping -->
+        <div class="form-section">
+            <h3>👨‍🏫 Link Teacher to Section</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ts_pid">Teacher Person ID *</label>
+                    <input type="number" id="ts_pid" placeholder="Person ID from database">
+                </div>
+                <div class="form-group">
+                    <label for="ts_sid">Section ID *</label>
+                    <input type="number" id="ts_sid" placeholder="Section ID from database">
+                </div>
+            </div>
+            <button onclick="addTeacherSection()">🔗 Link Teacher to Section</button>
+        </div>
+
+        <!-- Classrooms -->
+        <div class="form-section">
+            <h3>🏫 Add Classroom/Meeting Room</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="c_room">Room Number/Name *</label>
+                    <input type="text" id="c_room" placeholder="e.g., Room 101, Online Room 1">
+                </div>
+                <div class="form-group">
+                    <label for="c_location">Location</label>
+                    <input type="text" id="c_location" placeholder="e.g., Main Building, Zoom Platform">
+                </div>
+                <div class="form-group">
+                    <label for="c_capacity">Capacity</label>
+                    <input type="number" id="c_capacity" placeholder="e.g., 50">
+                </div>
+            </div>
+            <button onclick="addClassroom()">🏫 Add Classroom</button>
+        </div>
+
+        <!-- Schedule -->
+        <div class="form-section">
+            <h3>📅 Add Class Schedule</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="sch_sid">Section ID *</label>
+                    <input type="number" id="sch_sid" placeholder="Section ID">
+                </div>
+                <div class="form-group">
+                    <label for="sch_tid">Teacher ID *</label>
+                    <input type="number" id="sch_tid" placeholder="Teacher Person ID">
+                </div>
+                <div class="form-group">
+                    <label for="sch_cid">Classroom ID *</label>
+                    <input type="number" id="sch_cid" placeholder="Classroom ID">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="sch_subject">Subject Name *</label>
+                    <input type="text" id="sch_subject" placeholder="e.g., Computer Science">
+                </div>
+                <div class="form-group">
+                    <label for="sch_day">Day of Week *</label>
+                    <select id="sch_day">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="sch_start">Start Time *</label>
+                    <input type="time" id="sch_start">
+                </div>
+                <div class="form-group">
+                    <label for="sch_end">End Time *</label>
+                    <input type="time" id="sch_end">
+                </div>
+                <div class="form-group">
+                    <label for="sch_meeting_type">Meeting Type</label>
+                    <select id="sch_meeting_type">
+                        <option value="online">Online</option>
+                        <option value="physical">Physical</option>
+                        <option value="hybrid">Hybrid</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="sch_meeting_url">Meeting URL (for online classes)</label>
+                    <input type="url" id="sch_meeting_url" placeholder="https://zoom.us/j/123456789">
+                </div>
+            </div>
+            <button onclick="addSchedule()">📅 Add Schedule</button>
+        </div>
+
+        <!-- RFID Attendance -->
+        <div class="form-section">
+            <h3>📱 Add RFID/NFC Attendance</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="a_pid">Student Person ID *</label>
+                    <input type="number" id="a_pid" placeholder="Person ID">
+                </div>
+                <div class="form-group">
+                    <label for="a_schedule_id">Schedule ID *</label>
+                    <input type="number" id="a_schedule_id" placeholder="Schedule ID">
+                </div>
+                <div class="form-group">
+                    <label for="a_time">Date & Time *</label>
+                    <input type="datetime-local" id="a_time">
+                </div>
+                <div class="form-group">
+                    <label for="a_type">Attendance Type</label>
+                    <select id="a_type">
+                        <option value="rfid">RFID</option>
+                        <option value="nfc">NFC</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="addAttendance()">📱 Add RFID Attendance</button>
+        </div>
+
+        <!-- Face Recognition Attendance -->
+        <div class="form-section new-feature">
+            <h3>🤖 Add Face Recognition Attendance</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fa_schedule_id">Schedule ID *</label>
+                    <input type="number" id="fa_schedule_id" placeholder="Schedule ID">
+                </div>
+                <div class="form-group">
+                    <label for="fa_session_id">Session ID *</label>
+                    <input type="text" id="fa_session_id" placeholder="e.g., session_2024_001">
+                </div>
+                <div class="form-group">
+                    <label for="fa_pid">Student Person ID *</label>
+                    <input type="number" id="fa_pid" placeholder="Person ID">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fa_detection_count">Detection Count</label>
+                    <input type="number" id="fa_detection_count" min="0" max="5" value="0" placeholder="0-5">
+                </div>
+                <div class="form-group">
+                    <label for="fa_confidence">Average Confidence</label>
+                    <input type="number" id="fa_confidence" min="0" max="1" step="0.01" value="0.85" placeholder="0.0-1.0">
+                </div>
+            </div>
+            <button onclick="addFaceAttendance()">🤖 Add Face Attendance</button>
+        </div>
+
+        <!-- Output Display -->
+        <div class="form-section">
+            <h3>📄 Generated SQL Output</h3>
+            <div id="output">No SQL generated yet. Use the forms above to create statements.</div>
+        </div>
+
+        <!-- Download Section -->
+        <div class="download-section">
+            <button class="download-btn" onclick="downloadFile()">💾 Download Complete Schema</button>
+            <p><small>Downloads the complete SQL file with all your additions</small></p>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <h3>📋 How to Use This Tool</h3>
+            <ol>
+                <li><strong>Load Schema:</strong> Optionally upload an existing schema.sql file</li>
+                <li><strong>Add Data:</strong> Use the forms above to add persons, sections, schedules, etc.</li>
+                <li><strong>Review Output:</strong> Check the generated SQL in the output section</li>
+                <li><strong>Download:</strong> Save the complete schema with all your additions</li>
+                <li><strong>Deploy:</strong> Run the SQL file on your PostgreSQL database</li>
+            </ol>
+            <p><strong>💡 Tip:</strong> Person IDs, Section IDs, etc. should match the actual IDs in your database. Start with adding persons and sections, then create the relationships.</p>
+        </div>
+    </div>
+
+    <script src="add_index_corrected.js"></script>
+</body>
+</html>
