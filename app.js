@@ -1,3 +1,4 @@
+// Enhanced Face Recognition Attendance System - Optimized for 80-90 Students
 class FaceAttendanceSystem {
   constructor() {
     this.currentStream = null;
@@ -14,8 +15,8 @@ class FaceAttendanceSystem {
     this.processingDetection = false;
 
     this.config = {
-      captureInterval: 600000,
-      sessionDuration: 3000000,
+      captureInterval: 600000, // 10 minutes
+      sessionDuration: 3000000, // 50 minutes
       requiredDetections: 3,
       totalCaptures: 5,
       api_endpoint: "https://complete-attendance-system",
@@ -28,9 +29,14 @@ class FaceAttendanceSystem {
     this.students = [];
     this.sections = [{ id: 1, name: "S33" }, { id: 2, name: "S34" }, { id: 3, name: "S35" }];
 
+    // Bind methods if you want to use regular functions instead of arrow functions.
+    //this.loadFaceModels = this.loadFaceModels.bind(this);
+    //this.initializeApp = this.initializeApp.bind(this);
+
     this.initializeApp();
   }
 
+  // Arrow functions to keep the correct 'this'
   loadFaceModels = async () => {
     try {
       this.showStatus("Loading face recognition models...", "info");
@@ -268,7 +274,6 @@ class FaceAttendanceSystem {
 
   processDetections = async (detections) => {
     const now = new Date();
-    let count = 0;
     const keys = Array.from(this.attendanceData.keys());
     detections.forEach((_d, i) => {
       if (i < keys.length) {
@@ -278,7 +283,6 @@ class FaceAttendanceSystem {
           att.timestamps.push(now);
           att.confidenceScores.push(0.85);
           att.status = att.detections >= this.config.requiredDetections ? "present" : "partial";
-          count++;
         }
       }
     });
