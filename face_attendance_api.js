@@ -35,11 +35,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
   if (!token) {
     return res.status(401).json({ error: 'Access token required' });
   }
-
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
@@ -62,14 +60,16 @@ const dbQuery = async (text, params) => {
   }
 };
 
-// Login endpoint
+// Login endpoint with debug logging
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+    console.log(`Login attempt: username=${username}, password=${password}`);
 
     // Fallback authentication for demo
-    if ((username === 'teacher' && password === 'teach123') || 
+    if ((username === 'teacher' && password === 'teach123') ||
         (username === '2500032073' && password === '2500032073')) {
+      console.log('Fallback login successful');
       const token = jwt.sign({ username, role: 'teacher' }, JWT_SECRET, { expiresIn: '24h' });
       return res.json({
         success: true,
@@ -78,10 +78,11 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    res.status(401).json({ error: 'Invalid credentials' });
+    console.log('Login failed - invalid credentials');
+    return res.status(401).json({ error: 'Invalid credentials' });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -93,21 +94,19 @@ app.get('/students', (req, res) => {
       id: i,
       name: `Student ${i.toString().padStart(2, '0')}`,
       face_id: `FACE${i.toString().padStart(3, '0')}`,
-      section: `S${33 + Math.floor((i-1)/30)}`,
+      section: `S${33 + Math.floor((i - 1) / 30)}`,
       id_number: `25000${(32000 + i).toString()}`
     });
   }
-
   res.json({
     success: true,
-    students: students
+    students
   });
 });
 
 // Batch submit attendance
 app.post('/attendance/batch-submit', (req, res) => {
   const { session_id, attendance_data } = req.body;
-
   res.json({
     success: true,
     message: 'Attendance submitted successfully',
@@ -121,8 +120,8 @@ app.post('/attendance/batch-submit', (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     service: 'Face Recognition Attendance API'
   });
