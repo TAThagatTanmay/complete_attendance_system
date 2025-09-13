@@ -180,12 +180,12 @@ app.post("/attendance/batch-submit", async (req, res) => {
     let insertedRows = [];
     if (attendanceValues.length > 0) {
       const attendanceQuery = `
-        INSERT INTO face_attendance (schedule_id, session_id, person_id, status, detections_count, created_at)
+        INSERT INTO face_attendance (schedule_id, session_id, person_id, status, detection_count, created_at)
         VALUES ${attendanceValues.join(", ")}
         ON CONFLICT (schedule_id, person_id, session_id)
         DO UPDATE SET 
           status = EXCLUDED.status,
-          detections_count = EXCLUDED.detections_count
+          detection_count = EXCLUDED.detection_count
         RETURNING face_attendance_id, person_id;
       `;
       insertedRows = (await client.query(attendanceQuery, attendanceParams)).rows;
