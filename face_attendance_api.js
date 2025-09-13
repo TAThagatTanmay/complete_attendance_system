@@ -10,28 +10,34 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100
 });
 app.use(limiter);
 
-// PostgreSQL connection
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+// });
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+  user: process.env.USER || 'your_db_user',
+  host: process.env.HOST || 'localhost',
+  database: process.env.DATABASE || 'your_db_name',
+  password: process.env.PASSWORD || 'your_db_password',
+  port: 5432,
+  ssl: {
+    rejectUnauthorized: false
+  }
+})
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -47,7 +53,6 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Utility function for database queries
 const dbQuery = async (text, params) => {
   const client = await pool.connect();
   try {
@@ -60,13 +65,11 @@ const dbQuery = async (text, params) => {
   }
 };
 
-// Login endpoint with debug logging
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     console.log(`Login attempt: username=${username}, password=${password}`);
 
-    // Fallback authentication for demo
     if ((username === 'teacher' && password === 'teach123') ||
         (username === '2500032073' && password === '2500032073')) {
       console.log('Fallback login successful');
