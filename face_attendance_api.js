@@ -21,10 +21,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL,
-//   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-// });
 const pool = new Pool({
   user: process.env.USER || 'your_db_user',
   host: process.env.HOST || 'localhost',
@@ -69,7 +65,26 @@ app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     console.log(`Login attempt: username=${username}, password=${password}`);
+    const result = await dbQuery('SELECT * FROM users WHERE username = $1', [username]);
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const passwordMatch = await bcrypt.compare(password, user.password_hash);
+      if (passwordMatch) {
+        console.log('Login successful');
+        const token = jwt.sign({ username: user.person_id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+        res.cookie('token', token, { httpOnly: true });
+        return res.json({
+          success: true,
+          token,
+          user: { username: user.username, role: user.role }
+        });
+      } else {
+        console.log('Login failed - incorrect password');
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+    }
 
+    // Fallback for hardcoded credentials
     if ((username === 'teacher' && password === 'teach123') ||
         (username === '2500032073' && password === '2500032073')) {
       console.log('Fallback login successful');
@@ -89,7 +104,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Get all students
 app.get('/students', (req, res) => {
   const students = [];
   for (let i = 1; i <= 80; i++) {
@@ -107,7 +121,6 @@ app.get('/students', (req, res) => {
   });
 });
 
-// Batch submit attendance
 app.post('/attendance/batch-submit', (req, res) => {
   const { session_id, attendance_data } = req.body;
   res.json({
@@ -121,7 +134,6 @@ app.post('/attendance/batch-submit', (req, res) => {
   });
 });
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
