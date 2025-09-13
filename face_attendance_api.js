@@ -125,7 +125,7 @@ app.get('/students', async (req, res) => {
 
     // Assign running index and format response
     const students = result.rows.map((row, idx) => ({
-      id: idx + 1,
+      id: row.person_id,
       name: row.name,
       face_id: row.face_id ? `FACE${row.face_id.toString().padStart(3, '0')}` : null,
       section: row.section_name || null,
@@ -145,6 +145,9 @@ app.get('/students', async (req, res) => {
 
 app.post('/attendance/batch-submit', (req, res) => {
   const { session_id, attendance_data } = req.body;
+  console.log(session_id, attendance_data);
+  // Here you would process and store the attendance_data in the database
+  // For this example, we just log it and return a success response
   res.json({
     success: true,
     message: 'Attendance submitted successfully',
