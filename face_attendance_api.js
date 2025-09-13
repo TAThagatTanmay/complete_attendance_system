@@ -68,7 +68,7 @@ app.post('/login', async (req, res) => {
     const result = await dbQuery('SELECT * FROM users WHERE username = $1', [username]);
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      const passwordMatch = await bcrypt.compare(password, user.password_hash);
+      const passwordMatch = await bcrypt.compare(password, user.password);
       if (passwordMatch) {
         console.log('Login successful');
         const token = jwt.sign({ username: user.person_id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
