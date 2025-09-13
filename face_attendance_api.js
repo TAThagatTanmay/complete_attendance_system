@@ -104,21 +104,43 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/students', (req, res) => {
-  const students = [];
-  for (let i = 1; i <= 80; i++) {
-    students.push({
-      id: i,
-      name: `Student ${i.toString().padStart(2, '0')}`,
-      face_id: `FACE${i.toString().padStart(3, '0')}`,
-      section: `S${33 + Math.floor((i - 1) / 30)}`,
-      id_number: `25000${(32000 + i).toString()}`
+app.get('/students', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        p.person_id,
+        p.name,
+        p.id_number,
+        s.section_name,
+        fe.encoding_id AS face_id,
+        fe.face_descriptor
+      FROM persons p
+      LEFT JOIN student_sections ss ON p.person_id = ss.person_id
+      LEFT JOIN sections s ON ss.section_id = s.section_id
+      LEFT JOIN face_encodings fe ON p.person_id = fe.person_id AND fe.is_active = TRUE
+      WHERE p.role = 'student'
+      ORDER BY p.person_id
+    `;
+    const result = await dbQuery(query);
+
+    // Assign running index and format response
+    const students = result.rows.map((row, idx) => ({
+      id: idx + 1,
+      name: row.name,
+      face_id: row.face_id ? `FACE${row.face_id.toString().padStart(3, '0')}` : null,
+      section: row.section_name || null,
+      id_number: row.id_number,
+      face_descriptor: row.face_descriptor || null
+    }));
+
+    res.json({
+      success: true,
+      students
     });
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-  res.json({
-    success: true,
-    students
-  });
 });
 
 app.post('/attendance/batch-submit', (req, res) => {

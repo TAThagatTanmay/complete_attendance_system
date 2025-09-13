@@ -1,9 +1,3 @@
--- ================================
--- FRESH Enhanced Attendance System Database Schema
--- For NEW databases (no DROP statements)
--- Compatible with Render PostgreSQL
--- ================================
-
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS face_attendance CASCADE;
@@ -252,17 +246,17 @@ ON face_attendance (schedule_id, person_id, session_id);
 
 -- Insert sample persons (Students and Teachers)
 INSERT INTO persons (name, rfid_tag, role, id_number, password, email) VALUES
-('Nitin Singh', 'B2F7AF6A', 'student', '2500032073', '$2a$10$xqvlgnoqwdiIbauJrYUuC.aL34qhVoLaTeJ6yxqN6RMaLE0.FyCVK', 'nitin@student.edu'),
-('Abhijeet Arjeet', '717C423C', 'student', '2500031388', '$2a$10$Cl1HUEi42jS2R1NzRe9QVOSLF9Yg78fcUhPGa6sIm1pNwyOyaXev2', 'abhijeet@student.edu'),
-('Ayan Roy', '313F333D', 'student', '2500031529', '$2a$10$OIgEpa6yZ2.EpGywNklktuPBN6PRD53i5WA.7MB4yy3TM0A9yxHNS', 'ayan@student.edu'),
-('Pushkar Roy', 'B16C3A3D', 'student', '2500030922', '$2a$10$Rk3uD8v5i8vKiK3AitTRX.3Lz7G4Yh5QlGT7gK8Nq4LZqJ9aF6Nh2', 'pushkar@student.edu'),
-('Raunak Gupta', '315F7C3C', 'student', '2500031322', '$2a$10$Tk9sL4vKhJl3mKpOiYu7R.8Gf2V5Xk6Pl9Zc3NdMs8aF7Qr4Er5Wt', 'raunak@student.edu'),
-('Aman Raj', 'D171283C', 'student', '2500030448', '$2a$10$Vl7kF2vNdJm4oQsLj9w8T.6Hy8J3Zx5Qo2aB6Mn7gF4Kp1Er9Tv3Yu', 'aman@student.edu'),
-('Prateek Lohiya', '71A2463C', 'student', '2500032264', '$2a$10$Xp6kG1vFhKl2qUsOm8x4V.4Iz5L7Zy2Rp8cD4No3hG6Mp7Fr5Vx8Zw', 'prateek@student.edu'),
-('Divyanshu Goyal', 'C1A82F3C', 'student', '2500031363', '$2a$10$Yq4jH8vGiNm6rVtPn7y9X.2Jw3M9Az6Sq7dE8Op4iH5Nq6Gs8Wy7Av', 'divyanshu@student.edu'),
-('Ayush Kumar', '41F5263C', 'student', '2500032102', '$2a$10$Zr2kJ5vHjOo4sXuQo9z6Y.8Kx7N4Ba2Tr5eF3Pq9jI7Or4Ht6Vz5Bx', 'ayush@student.edu'),
-('Dr. Computer Teacher', 'TEACH001', 'teacher', 'T001', '$2a$10$iGjkALmc251rAC.B9GCCrez3cYD7xzhFYNP.bxiM2Uz7xKBtsNITy', 'teacher@college.edu'),
-('Prof. Data Science', 'TEACH002', 'teacher', 'T002', '$2a$10$kHlmBNod362sAD.C8HDDsfz4dYE8yaiGZOP.cyiN3Vz8yLCtsOJUz', 'datascience@college.edu');
+('Nitin Singh', 'B2F7AF6A', 'student', '2500032073', '$2a$10$xqvlgnoqwdiIbauJrYUuC.aL34qhVoLaTeJ6yxqN6RMaLE0.FyCVK', '2500032073@kluniversity.in'),
+('Abhijeet Arjeet', '717C423C', 'student', '2500031388', '$2a$10$Cl1HUEi42jS2R1NzRe9QVOSLF9Yg78fcUhPGa6sIm1pNwyOyaXev2', '2500031388@kluniversity.in'),
+('Ayan Roy', '313F333D', 'student', '2500031529', '$2a$10$OIgEpa6yZ2.EpGywNklktuPBN6PRD53i5WA.7MB4yy3TM0A9yxHNS', '2500031529@kluniversity.in'),
+('Pushkar Roy', 'B16C3A3D', 'student', '2500030922', '$2a$10$Rk3uD8v5i8vKiK3AitTRX.3Lz7G4Yh5QlGT7gK8Nq4LZqJ9aF6Nh2', '2500030922@kluniversity.in'),
+('Raunak Gupta', '315F7C3C', 'student', '2500031322', '$2a$10$Tk9sL4vKhJl3mKpOiYu7R.8Gf2V5Xk6Pl9Zc3NdMs8aF7Qr4Er5Wt', '2500031322@kluniversity.in'),
+('Aman Raj', 'D171283C', 'student', '2500030448', '$2a$10$Vl7kF2vNdJm4oQsLj9w8T.6Hy8J3Zx5Qo2aB6Mn7gF4Kp1Er9Tv3Yu', '2500030448@kluniversity.in'),
+('Prateek Lohiya', '71A2463C', 'student', '2500032264', '$2a$10$Xp6kG1vFhKl2qUsOm8x4V.4Iz5L7Zy2Rp8cD4No3hG6Mp7Fr5Vx8Zw', '2500032264@kluniversity.in'),
+('Divyanshu Goyal', 'C1A82F3C', 'student', '2500031363', '$2a$10$Yq4jH8vGiNm6rVtPn7y9X.2Jw3M9Az6Sq7dE8Op4iH5Nq6Gs8Wy7Av', '2500031363@kluniversity.in'),
+('Ayush Kumar', '41F5263C', 'student', '2500032102', '$2a$10$Zr2kJ5vHjOo4sXuQo9z6Y.8Kx7N4Ba2Tr5eF3Pq9jI7Or4Ht6Vz5Bx', '2500032102@kluniversity.in'),
+('Dr. Computer Teacher', 'TEACH001', 'teacher', 'T001', '$2a$10$iGjkALmc251rAC.B9GCCrez3cYD7xzhFYNP.bxiM2Uz7xKBtsNITy', 'teacher@kluniversity.in'),
+('Prof. Data Science', 'TEACH002', 'teacher', 'T002', '$2a$10$kHlmBNod362sAD.C8HDDsfz4dYE8yaiGZOP.cyiN3Vz8yLCtsOJUz', 'datascience@kluniversity.in');
 
 -- Insert users for authentication
 INSERT INTO users (username, password, role, person_id) VALUES
@@ -301,6 +295,19 @@ INSERT INTO classrooms (room_number, building, location, capacity, is_online) VA
 ('Lab 102', 'CS Building', 'Computer Science Building Floor 1', 25, FALSE),
 ('Lecture Hall A', 'Main Building', 'Main Academic Building Floor 2', 80, FALSE),
 ('Seminar Room 201', 'CS Building', 'Computer Science Building Floor 2', 20, FALSE);
+
+INSERT INTO face_encodings (person_id, face_descriptor, confidence_score, enrollment_method, photo_url) VALUES
+(1, '[0.1, 0.2, 0.3, 0.4]', 0.95, 'manual', 'https://example.com/photos/nitin.jpg'),
+(2, '[0.2, 0.1, 0.4, 0.3]', 0.92, 'manual', 'https://example.com/photos/abhijeet.jpg'),
+(3, '[0.3, 0.4, 0.1, 0.2]', 0.93, 'manual', 'https://example.com/photos/ayan.jpg'),
+(4, '[0.4, 0.3, 0.2, 0.1]', 0.94, 'manual', 'https://example.com/photos/pushkar.jpg'),
+(5, '[0.1, 0.3, 0.2, 0.4]', 0.91, 'manual', 'https://example.com/photos/raunak.jpg'),
+(6, '[0.2, 0.4, 0.3, 0.1]', 0.90, 'manual', 'https://example.com/photos/aman.jpg'),
+(7, '[0.3, 0.1, 0.4, 0.2]', 0.89, 'manual', 'https://example.com/photos/prateek.jpg'),
+(8, '[0.4, 0.2, 0.1, 0.3]', 0.88, 'manual', 'https://example.com/photos/divyanshu.jpg'),
+(9, '[0.1, 0.4, 0.3, 0.2]', 0.87, 'manual', 'https://example.com/photos/ayush.jpg'),
+(10,'[0.2, 0.3, 0.4, 0.1]', 0.96, 'manual', 'https://example.com/photos/teacher.jpg'),
+(11,'[0.3, 0.2, 0.1, 0.4]', 0.97, 'manual', 'https://example.com/photos/datascience.jpg');
 
 -- Insert sample schedule
 INSERT INTO schedule (section_id, teacher_id, classroom_id, subject_name, day_of_week, start_time, end_time, meeting_type, meeting_url, duration_minutes, academic_year, semester) VALUES
