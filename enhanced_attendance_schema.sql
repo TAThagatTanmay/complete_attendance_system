@@ -4,6 +4,18 @@
 -- Compatible with Render PostgreSQL
 -- ================================
 
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS attendance CASCADE;
+DROP TABLE IF EXISTS face_attendance CASCADE;
+DROP TABLE IF EXISTS face_detection_logs CASCADE;
+DROP TABLE IF EXISTS face_encodings CASCADE;
+DROP TABLE IF EXISTS schedule CASCADE;
+DROP TABLE IF EXISTS teacher_sections CASCADE;
+DROP TABLE IF EXISTS student_sections CASCADE;
+DROP TABLE IF EXISTS classrooms CASCADE;
+DROP TABLE IF EXISTS sections CASCADE;
+DROP TABLE IF EXISTS persons CASCADE;
+
 -- ================================
 -- 1. Persons (Students + Teachers)
 -- ================================
