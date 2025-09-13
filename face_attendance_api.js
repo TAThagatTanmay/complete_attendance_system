@@ -143,20 +143,94 @@ app.get('/students', async (req, res) => {
   }
 });
 
-app.post('/attendance/batch-submit', (req, res) => {
+app.post("/attendance/batch-submit", async (req, res) => {
   const { session_id, attendance_data } = req.body;
-  console.log(session_id, attendance_data);
-  // Here you would process and store the attendance_data in the database
-  // For this example, we just log it and return a success response
-  res.json({
-    success: true,
-    message: 'Attendance submitted successfully',
-    summary: {
-      successful: attendance_data ? attendance_data.length : 0,
-      failed: 0,
-      total: attendance_data ? attendance_data.length : 0
+
+  if (!attendance_data || attendance_data.length === 0) {
+    return res.status(400).json({ success: false, message: "No attendance data provided" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const idNumbers = attendance_data.map(s => s.idNumber);
+    const personRows = await client.query(
+      `SELECT person_id, id_number FROM persons 
+       WHERE id_number = ANY($1::text[]) AND role = 'student'`,
+      [idNumbers]
+    );
+
+    const personMap = new Map(personRows.rows.map(row => [row.id_number, row.person_id]));
+
+    const attendanceValues = [];
+    const attendanceParams = [];
+    let paramIndex = 1;
+
+    for (const student of attendance_data) {
+      const personId = personMap.get(student.idNumber);
+      if (!personId) continue;
+
+      attendanceValues.push(
+        `($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, NOW())`
+      );
+      attendanceParams.push(session_id, session_id, personId, student.status, student.detections);
     }
-  });
+
+    let insertedRows = [];
+    if (attendanceValues.length > 0) {
+      const attendanceQuery = `
+        INSERT INTO face_attendance (schedule_id, session_id, person_id, status, detections_count, created_at)
+        VALUES ${attendanceValues.join(", ")}
+        ON CONFLICT (schedule_id, person_id, session_id)
+        DO UPDATE SET 
+          status = EXCLUDED.status,
+          detections_count = EXCLUDED.detections_count
+        RETURNING face_attendance_id, person_id;
+      `;
+      insertedRows = (await client.query(attendanceQuery, attendanceParams)).rows;
+    }
+
+    const logsValues = [];
+    const logsParams = [];
+    paramIndex = 1;
+
+    for (const row of insertedRows) {
+      const student = attendance_data.find(s => personMap.get(s.idNumber) === row.person_id);
+      if (!student || student.confidenceScores.length === 0) continue;
+
+      for (let i = 0; i < student.confidenceScores.length; i++) {
+        logsValues.push(`($${paramIndex++}, $${paramIndex++}, $${paramIndex++})`);
+        logsParams.push(row.face_attendance_id, student.confidenceScores[i], student.timestamps[i]);
+      }
+    }
+
+    if (logsValues.length > 0) {
+      await client.query(
+        `INSERT INTO face_detection_logs (face_attendance_id, confidence_score, timestamp)
+         VALUES ${logsValues.join(", ")}`,
+        logsParams
+      );
+    }
+
+    await client.query("COMMIT");
+    res.json({
+      success: true,
+      message: "Attendance stored successfully (bulk insert)",
+      summary: {
+        successful: insertedRows.length,
+        failed: attendance_data.length - insertedRows.length,
+        total: attendance_data.length
+      }
+    });
+
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error inserting attendance:", error);
+    res.status(500).json({ success: false, message: "Failed to store attendance" });
+  } finally {
+    client.release();
+  }
 });
 
 app.get('/health', (req, res) => {
