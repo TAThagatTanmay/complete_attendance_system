@@ -145,6 +145,7 @@ app.get('/students', async (req, res) => {
 
 app.post("/attendance/batch-submit", async (req, res) => {
   const { session_id, attendance_data } = req.body;
+  console.log(session_id, attendance_data);
 
   if (!attendance_data || attendance_data.length === 0) {
     return res.status(400).json({ success: false, message: "No attendance data provided" });
