@@ -154,6 +154,15 @@ app.post("/attendance/batch-submit", async (req, res) => {
   const session_id = Object.keys(attendance_data_obj)[0];
   const students = attendance_data_obj[session_id];
 
+  if (!Array.isArray(students)) {
+    console.error("Expected students to be an array but got:", students);
+    return res.status(400).json({
+      success: false,
+      message: "Invalid attendance format: students must be an array"
+    });
+  }
+
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
