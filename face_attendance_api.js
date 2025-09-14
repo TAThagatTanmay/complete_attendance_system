@@ -144,60 +144,91 @@ app.get('/students', async (req, res) => {
 });
 
 app.post("/attendance/batch-submit", async (req, res) => {
-  const { session_id, attendance_data } = req.body;
-  console.log(session_id, attendance_data);
+  const attendance_data_obj = req.body.attendance_data;
 
-  if (!attendance_data || attendance_data.length === 0) {
+  if (!attendance_data_obj || Object.keys(attendance_data_obj).length === 0) {
     return res.status(400).json({ success: false, message: "No attendance data provided" });
   }
+
+  // Extract session_id (key of the object) and the student data
+  const session_id = Object.keys(attendance_data_obj)[0];
+  const students = attendance_data_obj[session_id];
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    const idNumbers = attendance_data.map(s => s.idNumber);
+    // Step 1: Get all person_ids in one query
+    const idNumbers = students.map(s => s.idNumber);
     const personRows = await client.query(
       `SELECT person_id, id_number FROM persons 
        WHERE id_number = ANY($1::text[]) AND role = 'student'`,
       [idNumbers]
     );
+    const personMap = new Map(personRows.rows.map(r => [r.id_number, r.person_id]));
 
-    const personMap = new Map(personRows.rows.map(row => [row.id_number, row.person_id]));
-
+    // Step 2: Build bulk insert for face_attendance
     const attendanceValues = [];
     const attendanceParams = [];
     let paramIndex = 1;
 
-    for (const student of attendance_data) {
+    for (const student of students) {
       const personId = personMap.get(student.idNumber);
       if (!personId) continue;
 
+      // Compute stats
+      const scores = student.confidenceScores;
+      const confidenceAvg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+      const confidenceMin = scores.length ? Math.min(...scores) : 0;
+      const confidenceMax = scores.length ? Math.max(...scores) : 0;
+      const firstDetection = student.timestamps[0] || null;
+      const lastDetection = student.timestamps.at(-1) || null;
+
       attendanceValues.push(
-        `($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, NOW())`
+        `($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, NOW())`
       );
-      attendanceParams.push(session_id, session_id, personId, student.status, student.detections);
+
+      attendanceParams.push(
+        null, // schedule_id -> NULL since we don't have a numeric schedule_id
+        personId,
+        session_id,
+        student.detections, // detection_count
+        confidenceAvg,
+        confidenceMin,
+        confidenceMax,
+        firstDetection,
+        lastDetection,
+        student.status
+      );
     }
 
     let insertedRows = [];
     if (attendanceValues.length > 0) {
       const attendanceQuery = `
-        INSERT INTO face_attendance (schedule_id, session_id, person_id, status, detection_count, created_at)
+        INSERT INTO face_attendance 
+        (schedule_id, person_id, session_id, detection_count, confidence_avg, confidence_min, confidence_max, first_detection, last_detection, status, created_at)
         VALUES ${attendanceValues.join(", ")}
         ON CONFLICT (schedule_id, person_id, session_id)
         DO UPDATE SET 
-          status = EXCLUDED.status,
-          detection_count = EXCLUDED.detection_count
+          detection_count = EXCLUDED.detection_count,
+          confidence_avg = EXCLUDED.confidence_avg,
+          confidence_min = EXCLUDED.confidence_min,
+          confidence_max = EXCLUDED.confidence_max,
+          first_detection = EXCLUDED.first_detection,
+          last_detection = EXCLUDED.last_detection,
+          status = EXCLUDED.status
         RETURNING face_attendance_id, person_id;
       `;
       insertedRows = (await client.query(attendanceQuery, attendanceParams)).rows;
     }
 
+    // Step 3: Bulk insert detection logs
     const logsValues = [];
     const logsParams = [];
     paramIndex = 1;
 
     for (const row of insertedRows) {
-      const student = attendance_data.find(s => personMap.get(s.idNumber) === row.person_id);
+      const student = students.find(s => personMap.get(s.idNumber) === row.person_id);
       if (!student || student.confidenceScores.length === 0) continue;
 
       for (let i = 0; i < student.confidenceScores.length; i++) {
@@ -217,11 +248,11 @@ app.post("/attendance/batch-submit", async (req, res) => {
     await client.query("COMMIT");
     res.json({
       success: true,
-      message: "Attendance stored successfully (bulk insert)",
+      message: "Attendance stored successfully",
       summary: {
         successful: insertedRows.length,
-        failed: attendance_data.length - insertedRows.length,
-        total: attendance_data.length
+        failed: students.length - insertedRows.length,
+        total: students.length
       }
     });
 
