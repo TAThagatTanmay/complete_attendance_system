@@ -145,6 +145,12 @@ app.get('/students', async (req, res) => {
 
 app.post("/attendance/batch-submit", async (req, res) => {
   const attendance_data_obj = req.body.attendance_data;
+  let students = attendance_data_obj[session_id];
+
+  if (!Array.isArray(students)) {
+    students = [students];
+  }
+
 
   if (!attendance_data_obj || Object.keys(attendance_data_obj).length === 0) {
     return res.status(400).json({ success: false, message: "No attendance data provided" });
@@ -152,7 +158,6 @@ app.post("/attendance/batch-submit", async (req, res) => {
 
   // Extract session_id (key of the object) and the student data
   const session_id = Object.keys(attendance_data_obj)[0];
-  const students = attendance_data_obj[session_id];
 
   if (!Array.isArray(students)) {
     console.error("Expected students to be an array but got:", students);
